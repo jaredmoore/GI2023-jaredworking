@@ -12,14 +12,14 @@ I used Python 3.8, though it should work for most current versions of Python.
 
   * Arguments:
 
-   * `"--gens", type=int, default=100, help="Number of generations to run evolution for."`
-   * `"--pop_size", type=int, default=100, help="Population size for evolution."`
-   * `"--treatment", type=int, default=0, help="Run Number"`
-   * `"--run_num", type=int, default=0, help="Run Number"`
-   * `"--output_path", type=str, default="./", help="Output path."`
-   * `"--lexicase",action="store_true",help="Whether to do normal or Lexicase selection."`
-   * `"--shuffle", action="store_true", help="Shuffle the fitness indicies per selection event."`
-   * `"--tourn_size", type=int, default=4, help="What tournament size should we go with?"`
+      * `"--gens", type=int, default=100, help="Number of generations to run evolution for."`
+      * `"--pop_size", type=int, default=100, help="Population size for evolution."`
+      * `"--treatment", type=int, default=0, help="Run Number"`
+      * `"--run_num", type=int, default=0, help="Run Number"`
+      * `"--output_path", type=str, default="./", help="Output path."`
+      * `"--lexicase",action="store_true",help="Whether to do normal or Lexicase selection."`
+      * `"--shuffle", action="store_true", help="Shuffle the fitness indicies per selection event."`
+      * `"--tourn_size", type=int, default=4, help="What tournament size should we go with?"`
     
 
 ## Grammar construction
