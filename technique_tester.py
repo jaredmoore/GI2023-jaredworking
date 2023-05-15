@@ -6,6 +6,8 @@ from techniques import *
 from time import sleep
 from colour_palettes import palettes
 
+import math
+
 DIM = (1000,1000)
 background = "black"
 
@@ -232,25 +234,67 @@ def convert_primary(image):
   # Return new image
   return new
 
-
+# Source: https://stackoverflow.com/a/52879133
+def score_triadic_color_alignment(image):
+  """ Find the dominant color in an image and then identify the three complimentary colors.  
+      Returned score will be how closely the three primary colors in the image align with a triadic
+      color palette.  
+  """
+  # Resize the image if we want to save time.
+  #Resizing parameters
+  width, height = 150, 150
+  image = image.copy()
+  image.thumbnail((width, height), resample=0)
+  
+  # Good explanation of how HSV works to find complimentary colors.
+  # https://stackoverflow.com/a/69880467
+  image.convert('HSV')
+  
+  #image = image.resize((width, height), resample = 0)
+  #Get colors from image object
+  pixels = image.getcolors(width * height)
+  #Sort them by count number(first element of tuple)
+  sorted_pixels = sorted(pixels, key=lambda t: t[0])
+  
+  # Get the most frequent colors
+  # Filter out black if it is the dominant color since our background is black.
+  top_colors = sorted_pixels[-4:]
+  if top_colors[-1][1] == (0,0,0,255):
+    top_colors = top_colors[:-1]
+  else:
+    top_colors = top_colors[-2:]
+    
+  # Sort the colors by hue (ascending).
+  top_colors = sorted(top_colors, key=lambda x: x[1][0])
+  print(top_colors) 
+  
+  # Assess how closely the three colors hue align with a 60 degree separation.
+  # This would be a difference of 85 in the HSV hue value between each color.
+  if len(top_colors) > 2:
+    avg_distance = sum([math.fabs(top_colors[i][1][0] - top_colors[(i+1)%2][1][0]) for i in range(3)])/3
+  else:
+    avg_distance = 255
+  
+  return math.fabs(255/3 - avg_distance)
+  
 if __name__ == "__main__":
     image = Image.new("RGBA", DIM, background)
 
     # drunkardsWalk(image)
-    WolframCA(image)
-    image.save("dithering.orig.png")
+    # WolframCA(image)
+    # image.save("dithering.orig.png")
 
-    new = convert_grayscale(image)
-    new.save("dithering.grayscale.png")
+    # new = convert_grayscale(image)
+    # new.save("dithering.grayscale.png")
 
-    new = convert_halftoning(image)
-    new.save("dithering.halftone.png")
+    # new = convert_halftoning(image)
+    # new.save("dithering.halftone.png")
 
-    new = convert_dithering(image)
-    new.save("dithering.dithering.png")
+    # new = convert_dithering(image)
+    # new.save("dithering.dithering.png")
 
-    new = convert_primary(image)
-    new.save("dithering.primary.png")
+    # new = convert_primary(image)
+    # new.save("dithering.primary.png")
 
     #image.save("drunk.png")
 
@@ -264,5 +308,12 @@ if __name__ == "__main__":
     
     #flowField2(image, random.choice(palettes), 'curvy', random.randrange(200, 600), random.randrange(2, 5))
     #image.save("ff.png")
-    circlePacking(image, random.choice(palettes), random.randrange(10, 30))
-    image.save("circles.png")
+    
+    # Generate 10 test images to see how the scores compared to aesthetic appeal.
+    for _ in range(10):
+      image = Image.new("RGBA", DIM, background)
+      circlePacking(image, random.choice(palettes), random.randrange(10, 30))
+      score = score_triadic_color_alignment(image)
+      
+      image.save(f"circles_{int(score)}.png")
+    
