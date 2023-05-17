@@ -235,6 +235,99 @@ def convert_primary(image):
   return new
 
 # Source: https://stackoverflow.com/a/52879133
+def hsv_color_list(image):
+  """ Get the list of colors present in an image object by HSV value.  
+  """
+  # Resize the image if we want to save time.
+  #Resizing parameters
+  width, height = 300, 300
+  image = image.copy()
+  image.thumbnail((width, height), resample=0)
+  
+  # Good explanation of how HSV works to find complimentary colors.
+  # https://stackoverflow.com/a/69880467
+  image.convert('HSV')
+  
+  #image = image.resize((width, height), resample = 0)
+  #Get colors from image object
+  pixels = image.getcolors(width * height)
+  #Sort them by count number(first element of tuple)
+  sorted_pixels = sorted(pixels, key=lambda t: t[0])
+  
+  for color in sorted_pixels:
+    print(color)
+  
+  # Get the most frequent colors
+  # Filter out black if it is the dominant color since our background is black.
+  # top_colors = sorted_pixels[-4:]
+  # if top_colors[-1][1] == (0,0,0,255):
+  #   top_colors = top_colors[:-1]
+  # else:
+  #   top_colors = top_colors[-2:]
+    
+  # # Sort the colors by hue (ascending).
+  # top_colors = sorted(top_colors, key=lambda x: x[1][0])
+  # print(top_colors) 
+  
+  # # Assess how closely the three colors hue align with a 60 degree separation.
+  # # This would be a difference of 85 in the HSV hue value between each color.
+  # if len(top_colors) > 2:
+  #   avg_distance = sum([math.fabs(top_colors[i][1][0] - top_colors[(i+1)%2][1][0]) for i in range(3)])/3
+  # else:
+  #   avg_distance = 255
+  
+  # return math.fabs(255/3 - avg_distance)
+  
+# Source: https://stackoverflow.com/a/52879133
+def score_color_alignment(image, n=3):
+  """ Find the dominant color in an image and then identify the n complimentary colors.  
+      Returned score will be how closely the n primary colors in the image align with an n
+      color palette.  
+      
+      args:
+        image: image to analyze
+        n: number of complimentary colors to identify
+        
+      returns:
+        score: how closely the n primary colors in the image align with an n color palette.
+  """
+  # Resize the image if we want to save time.
+  #Resizing parameters
+  width, height = 150, 150
+  image = image.copy()
+  image.thumbnail((width, height), resample=0)
+  
+  # Good explanation of how HSV works to find complimentary colors.
+  # https://stackoverflow.com/a/69880467
+  image.convert('HSV')
+  
+  #image = image.resize((width, height), resample = 0)
+  #Get colors from image object
+  pixels = image.getcolors(width * height)
+  #Sort them by count number(first element of tuple)
+  sorted_pixels = sorted(pixels, key=lambda t: t[0])
+  
+  # Get the most frequent colors
+  # Filter out black if it is the dominant color since our background is black.
+  top_colors = sorted_pixels[-1*(n+1):]
+  if top_colors[-1][1] == (0,0,0,255):
+    top_colors = top_colors[:-1]
+  else:
+    top_colors = top_colors[-(n-1):]
+    
+  # Sort the colors by hue (ascending).
+  top_colors = sorted(top_colors, key=lambda x: x[1][0])
+  
+  # Assess how closely the three colors hue align with a 60 degree separation.
+  # This would be a difference of 85 in the HSV hue value between each color.
+  if len(top_colors) > n-1:
+    avg_distance = sum([math.fabs(top_colors[i][1][0] - top_colors[(i+1)%n][1][0]) if i != n-1 else math.fabs(255-top_colors[i][1][0] + top_colors[(i+1)%n][1][0]) for i in range(n)])/n
+  else:
+    avg_distance = 255
+  
+  return math.fabs(255/n - avg_distance)
+
+# Source: https://stackoverflow.com/a/52879133
 def score_triadic_color_alignment(image):
   """ Find the dominant color in an image and then identify the three complimentary colors.  
       Returned score will be how closely the three primary colors in the image align with a triadic
@@ -266,12 +359,11 @@ def score_triadic_color_alignment(image):
     
   # Sort the colors by hue (ascending).
   top_colors = sorted(top_colors, key=lambda x: x[1][0])
-  print(top_colors) 
   
   # Assess how closely the three colors hue align with a 60 degree separation.
   # This would be a difference of 85 in the HSV hue value between each color.
   if len(top_colors) > 2:
-    avg_distance = sum([math.fabs(top_colors[i][1][0] - top_colors[(i+1)%2][1][0]) for i in range(3)])/3
+    avg_distance = sum([math.fabs(top_colors[i][1][0] - top_colors[(i+1)%3][1][0]) if i != 2 else math.fabs(255-top_colors[i][1][0] + top_colors[(i+1)%3][1][0]) for i in range(3)])/3
   else:
     avg_distance = 255
   
@@ -309,7 +401,7 @@ if __name__ == "__main__":
     #flowField2(image, random.choice(palettes), 'curvy', random.randrange(200, 600), random.randrange(2, 5))
     #image.save("ff.png")
     
-    # Generate 10 test images to see how the scores compared to aesthetic appeal.
+    # # Generate 10 test images to see how the scores compared to aesthetic appeal.
     for _ in range(10):
       image = Image.new("RGBA", DIM, background)
       circlePacking(image, random.choice(palettes), random.randrange(10, 30))
@@ -317,3 +409,8 @@ if __name__ == "__main__":
       
       image.save(f"circles_{int(score)}.png")
     
+    # image = Image.new("RGBA", DIM, background)
+    # for _ in range(5):
+    #   circlePacking(image, random.choice(palettes), random.randrange(10, 30))
+    # hsv_color_list(image)
+    # image.save("circles.png")
