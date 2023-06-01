@@ -370,6 +370,65 @@ def score_triadic_color_alignment(_population):
 
   return fitnesses
 
+# Source: https://stackoverflow.com/a/52879133
+def hsv_color_list(image):
+  """ Get the list of colors present in an image object by HSV value.  
+  """
+  # Resize the image if we want to save time.
+  #Resizing parameters
+  width, height = DIM[0], DIM[1]
+  image = image.copy()
+  image.thumbnail((width, height), resample=0)
+  
+  # Good explanation of how HSV works to find complimentary colors.
+  # https://stackoverflow.com/a/69880467
+  image.convert('HSV')
+  
+  #image = image.resize((width, height), resample = 0)
+  #Get colors from image object
+  pixels = image.getcolors(width * height)
+  #Sort them by count number(first element of tuple)
+  sorted_pixels = sorted(pixels, key=lambda t: t[0])
+  
+  for color in sorted_pixels:
+    print(color)
+    
+  # Print the total number of pixels.
+  print(sum([color[0] for color in sorted_pixels]))
+  return sorted_pixels
+  
+def score_negative_space(_population, target_percent=.7, primary_black=True):
+  """ Score each individual based on their negative space compared to a target percentage.  
+    Assess how closely the provided image matches the target percentage for negative space. 
+  
+  Args:
+    _population: list of individuals to score
+    target_percent: target percentage of negative space in the image
+    primary_black: boolean indicating whether the primary color should be black or the top color in the image.
+  """
+  fitnesses = []
+  
+  for p in _population:
+    color_distribution = hsv_color_list(p.image)
+  
+    total_pixels = sum([color[0] for color in color_distribution])
+  
+    negative_space_pixels = 0
+    if primary_black:
+        # The primary color is black, so the negative space is whatever the distribution of black is.
+        for color in color_distribution:
+            if color[1] == (0,0,0,255):
+                negative_space_pixels = color[0]
+                break
+            else:
+                # The primary color is not black, so the negative space is whatever the distribution of the top color is.
+                negative_space_pixels = color[0]
+    
+    negative_space_percent = negative_space_pixels / total_pixels
+  
+    fitnesses.append(math.fabs(target_percent - negative_space_percent))
+
+  return fitnesses
 
 # Perform single-point crossover
 def singlePointCrossover(ind1, ind2):

@@ -240,7 +240,7 @@ def hsv_color_list(image):
   """
   # Resize the image if we want to save time.
   #Resizing parameters
-  width, height = 300, 300
+  width, height = DIM[0], DIM[1]
   image = image.copy()
   image.thumbnail((width, height), resample=0)
   
@@ -256,27 +256,37 @@ def hsv_color_list(image):
   
   for color in sorted_pixels:
     print(color)
-  
-  # Get the most frequent colors
-  # Filter out black if it is the dominant color since our background is black.
-  # top_colors = sorted_pixels[-4:]
-  # if top_colors[-1][1] == (0,0,0,255):
-  #   top_colors = top_colors[:-1]
-  # else:
-  #   top_colors = top_colors[-2:]
     
-  # # Sort the colors by hue (ascending).
-  # top_colors = sorted(top_colors, key=lambda x: x[1][0])
-  # print(top_colors) 
+  # Print the total number of pixels.
+  print(sum([color[0] for color in sorted_pixels]))
+  return sorted_pixels
   
-  # # Assess how closely the three colors hue align with a 60 degree separation.
-  # # This would be a difference of 85 in the HSV hue value between each color.
-  # if len(top_colors) > 2:
-  #   avg_distance = sum([math.fabs(top_colors[i][1][0] - top_colors[(i+1)%2][1][0]) for i in range(3)])/3
-  # else:
-  #   avg_distance = 255
+def score_negative_space(image, target_percent=.7, primary_black=True):
+  """ Assess how closely the provided image matches the target percentage for negative space. 
   
-  # return math.fabs(255/3 - avg_distance)
+  Args:
+    image: image to analyze
+    target_percent: target percentage of negative space in the image
+    primary_black: boolean indicating whether the primary color should be black or the top color in the image.
+  """
+  color_distribution = hsv_color_list(image)
+  
+  total_pixels = sum([color[0] for color in color_distribution])
+  
+  negative_space_pixels = 0
+  if primary_black:
+    # The primary color is black, so the negative space is whatever the distribution of black is.
+    for color in color_distribution:
+      if color[1] == (0,0,0,255):
+        negative_space_pixels = color[0]
+        break
+  else:
+    # The primary color is not black, so the negative space is whatever the distribution of the top color is.
+    negative_space_pixels = color[0]
+    
+  negative_space_percent = negative_space_pixels / total_pixels
+  
+  return math.fabs(target_percent - negative_space_percent)
   
 # Source: https://stackoverflow.com/a/52879133
 def score_color_alignment(image, n=3):
@@ -407,7 +417,10 @@ if __name__ == "__main__":
       circlePacking(image, random.choice(palettes), random.randrange(10, 30))
       score = score_triadic_color_alignment(image)
       
-      image.save(f"circles_{int(score)}.png")
+      neg_score = score_negative_space(image)
+      print(neg_score)
+      
+      image.save(f"circles_{int(neg_score*100)}.png")
     
     # image = Image.new("RGBA", DIM, background)
     # for _ in range(5):
