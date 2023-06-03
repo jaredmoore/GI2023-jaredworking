@@ -376,9 +376,9 @@ def hsv_color_list(image):
   """
   # Resize the image if we want to save time.
   #Resizing parameters
-  width, height = DIM[0], DIM[1]
-  image = image.copy()
-  image.thumbnail((width, height), resample=0)
+  #width, height = DIM[0], DIM[1]
+  #image = image.copy()
+  #image.thumbnail((width, height), resample=0)
   
   # Good explanation of how HSV works to find complimentary colors.
   # https://stackoverflow.com/a/69880467
@@ -420,9 +420,9 @@ def score_negative_space(_population, target_percent=.7, primary_black=True):
             if color[1] == (0,0,0,255):
                 negative_space_pixels = color[0]
                 break
-            else:
-                # The primary color is not black, so the negative space is whatever the distribution of the top color is.
-                negative_space_pixels = color[0]
+    else:
+        # The primary color is not black, so the negative space is whatever the distribution of the top color is.
+        negative_space_pixels = color[0]
     
     negative_space_percent = negative_space_pixels / total_pixels
   
