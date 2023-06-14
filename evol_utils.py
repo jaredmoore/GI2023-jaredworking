@@ -422,7 +422,7 @@ def score_negative_space(_population, target_percent=.7, primary_black=True):
                 break
     else:
         # The primary color is not black, so the negative space is whatever the distribution of the top color is.
-        negative_space_pixels = color[0]
+        negative_space_pixels = color_distribution[0][0]
     
     negative_space_percent = negative_space_pixels / total_pixels
   
