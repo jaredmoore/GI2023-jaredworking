@@ -1,4 +1,4 @@
-from PIL import Image, ImageDraw, ImageChops
+from PIL import Image, ImageDraw, ImageChops,  ImageOps
 import opensimplex
 from perlin_noise import PerlinNoise
 from pixelsort import pixelsort
@@ -459,6 +459,47 @@ def circlePacking(img, palette, limit):
                          fill=c['colour'],
                          width=radius)
 
+def invert(img):
+    
+    r,g,b,a = img.split()
+    rgb_image = Image.merge('RGB', (r,g,b))
+
+    inverted_image = ImageOps.invert(rgb_image)
+
+    r2,g2,b2 = inverted_image.split()
+
+    new_img = Image.merge('RGBA', (r2,g2,b2,a))
+    
+    mask = mask_random_rects(img.size, random.randint(4,8))
+    img = Image.composite(new_img, img, mask)
+    
+    return img
+
+def technique_mask(img, img2):
+    # Take in two images and mask the second inside randomly generated mask.
+    
+    new_img = Image.new("RGBA", img.size, "white")
+    flowField2(new_img, random.choice(palettes), 'curvy', random.randrange(200, 600), random.randrange(2, 5))
+    
+    mask = mask_random_rects(img.size)
+    
+    img = Image.composite(img2, img, mask)
+    
+    return img
+
+def mask_random_rects(img_dim, num_rects=6):
+    # Generate a mask of random rectangles and return.
+    mask = Image.new("L", img_dim, 0)
+    draw = ImageDraw.Draw(mask)
+    # Create a random number and size of rectangles to add to the mask.
+    for i in range(num_rects):
+        start_x = int(random.uniform(0,0.8*img_dim[0]))
+        start_y = int(random.uniform(0,0.8*img_dim[1]))
+        end_x = random.randint(start_x+10,img_dim[0])
+        end_y = random.randint(start_y+10,img_dim[1])
+        draw.rectangle((start_x, start_y, end_x, end_y), fill=255)
+        
+    return mask
 
 # ---
 
@@ -677,3 +718,235 @@ def convert_primary(image):
 
     # Return new image
     return new
+
+
+def lineContours(img, palette, num_lines=80, line_length=20, angle_incr=10, x_incr=2, y_incr=2):
+    draw = ImageDraw.Draw(img)
+
+    # get list of hex values
+    palette = getPaletteValues(palette)
+    
+    width, height = img.size
+    
+    x = random.randrange(width)
+    y = random.randrange(height)
+    
+    angle = random.randrange(180)
+    
+    direction_x = random.choice([-1, 1])
+    direction_y = random.choice([-1, 1])
+    direction_angle = random.choice([-1, 1])
+    
+    for i in range(num_lines):
+        # Calculate the (x,y) coordinates of the end point of the line to draw based on the angle.
+        
+        x1 = x + line_length * math.cos(math.radians(angle))
+        x2 = x - line_length * math.cos(math.radians(angle))
+        
+        y1 = y + line_length * math.sin(math.radians(angle))
+        y2 = y - line_length * math.sin(math.radians(angle))
+        
+        draw.line((x1,y1,x2,y2),  fill=(255, 255, 255, 255), width=2)
+        
+        x = x + (random.randrange(x_incr) * direction_x)
+        y = y + (random.randrange(y_incr) * direction_y)
+        angle = angle + (random.randrange(angle_incr) * direction_angle)
+        
+        if x > width or x < 0:
+            direction_x *= -1
+            
+        if y > height or y < 0:
+            direction_y *= -1
+            
+        if angle > 180 or angle < 0:
+            direction_angle *= -1
+            
+def gravityParticle(img, palette, num_steps=1000, radius=2, step_update=False):
+    draw = ImageDraw.Draw(img)
+
+    # get list of hex values
+    palette = getPaletteValues(palette)
+    
+    width, height = img.size
+    
+    angle = random.randrange(360)
+    length = width/random.randrange(1,10)
+    cur_pos = 0
+    
+    x = width//4 + random.randrange(width)//2
+    y = height//4 + random.randrange(height)//2
+    
+    angle_update = random.randrange(1,5)
+    position_update = random.randrange(1,10)
+    
+    rotate_direction = random.choice([-1, 1])
+    direction = random.choice([-1, 1])
+    
+    for i in range(num_steps):
+        if step_update:
+            angle_update = random.randrange(1,5)
+            position_update = random.randrange(4,20)
+        
+        # Calculate the (x,y) coordinates of the end point of the line to draw based on the angle.
+        x1 = x + random.randrange(-10,10) + cur_pos * math.cos(math.radians(angle))
+        y1 = y + random.randrange(-10,10) + cur_pos * math.sin(math.radians(angle))
+        
+        draw.ellipse(xy=(x1 - radius, y1 - radius, x1 + radius, y1 + radius),
+                         fill=(255,255,255,255),
+                         width=radius)
+        
+        
+        
+        cur_pos = cur_pos + (position_update * direction)
+        
+        if cur_pos > length:
+            direction *= -1
+            cur_pos = length
+        elif cur_pos < 0:
+            direction *= -1
+            cur_pos = 0
+            
+        angle = (angle + (angle_update * rotate_direction)) % 360 
+        
+def abstractRectangles(img, palette, num_rects=10):
+    draw = ImageDraw.Draw(img)
+
+    # get list of hex values
+    palette = getPaletteValues(palette)
+    
+    width, height = img.size
+    
+    for _ in range(num_rects):
+        x = width//20 + random.randrange(width-width//20)
+        y = height//20 + random.randrange(height-height//20)
+        
+        rect_length = (width-x)//random.randrange(1,10)
+        rect_height = (height-y)//random.randrange(1,10)
+        
+        rect_length = 1 if rect_length < 1 else rect_length
+        rect_height = 1 if rect_height < 1 else rect_height
+    
+        mondrian_rectangle(img, x, y, rect_length, rect_height, random.choice(palette), random.randrange(0,400))
+        
+def mondrian_rectangle(img, x, y, rect_len, rect_ht, rect_fill, line_overdraw):
+    """ Draw a mondrian style rectangle with black lines exceeding the edges.
+
+    Args:
+        img (PIL image object): the image to draw on.
+        x (int): center x location of the rectangle.
+        y (int): center y location of the rectangle.
+        rect_len (int): length of the rectangle.
+        rect_ht (int): height of the rectangle.
+        rect_fill ((int,int,int)): color to fill the rectangle with in (rgb).
+        line_overdraw (int): The amount of overdraw for the black lines.
+    """
+    draw = ImageDraw.Draw(img)
+    draw.rectangle(xy=(x, y, x + rect_len, y + rect_ht),
+                         fill=rect_fill)
+    draw.line((x-line_overdraw, y,                x+rect_len+line_overdraw,    y), fill="black", width=4)
+    draw.line((x-line_overdraw, y+rect_ht,    x+rect_len+line_overdraw,    y+rect_ht), fill="black", width=4)
+    draw.line((x,               y-line_overdraw,  x,                y+rect_ht+line_overdraw), fill="black", width=4)
+    draw.line((x+rect_len,   y-line_overdraw,  x+rect_len,    y+rect_ht+line_overdraw), fill="black", width=4)
+        
+def staticShifter(img):
+    # Create a band of static in an image by shifting ranges of pixels.
+    width, height = img.size
+    
+    shift_pixel_range = random.randrange(height//8,height//2)
+    
+    start_shift = random.randrange(0, height-shift_pixel_range)
+    
+    shift_stride = random.randrange(1,5)
+    
+    for y in range(start_shift, start_shift+shift_pixel_range, shift_stride):
+        line_shift = random.choice([-1,1]) * random.randrange(width//50, width//10)
+        for y_shift in range(y, y+shift_stride):
+            for x in range(width):
+                pixel = img.getpixel((x,y_shift))
+                img.putpixel(((x+line_shift)%width,y_shift), pixel)
+                
+def clifford_attractor(x, y, a=-1.4, b=1.7, c=1.0, d=0.7):
+	'''Returns the change in arguments x and y according to 
+	the Clifford map equation. Kwargs a, b, c, and d are specified
+	as constants.
+ 
+    Source: https://blbadger.github.io/clifford-attractor.html
+	'''
+	x_next = np.sin(a*y) + c*np.cos(a*x) 
+	y_next = np.sin(b*x) + d*np.cos(b*y)
+	return x_next, y_next
+
+def clifford_sequence(img, x, y, color=(255,255,255,255), cliff_params=False):
+    """ Create a clifford attractor sequence starting at the provided x and y."""
+    # Parameters for num_iters and sine wave.
+    num_iters = 400000
+    a_phase_offset = np.radians(random.randrange(0, 360))
+    b_phase_offset = np.radians(random.randrange(0, 360))
+    
+    draw = ImageDraw.Draw(img)
+    
+    if cliff_params:
+        a, b, c, d = cliff_params
+    else:
+        a = random.random()*4 - 2
+        b = random.random()*4 - 2
+        c = random.random()*2
+        d = random.random()*2
+    
+    print(f"[{x},{y},{a},{b},{c},{d}],")
+    for i in range(num_iters):
+        x, y = clifford_attractor(x, y, a, b, c, d)
+        
+        x_p = img.width//2 + x/np.pi*(img.width//2)
+        y_p = img.height//2 + y/np.pi*(img.height//2)
+        # draw.rectangle(xy=(x_p-1, y_p-1, x_p + 1, y_p + 1),
+                        #  fill="black")
+        draw.point((x_p, y_p), fill=color)
+        
+        # Could we use a third parameter for point size?
+        # radius = random.randint(1,5)/5
+        # draw.ellipse(xy=(x_p - radius, y_p - radius, x_p + radius, y_p + radius), fill=color)
+        
+        #a += random.random()*0.01 - 0.005
+        #b += random.random()*0.01 - 0.005
+        
+        # a = ((np.sin(2*np.pi*0.000001*i + a_phase_offset) + 1)/2)*img.width
+        #b = ((np.sin(2*np.pi*0.000001*i + b_phase_offset) + 1)/2)*img.height
+        
+        # if a < 0 or a > img.width or b < 0 or b > img.height:
+        #     print(a,b)
+        # draw.point((a,b), fill="green")
+        
+        
+        
+def cliffords(img, x, y, num_cliffs = 2):
+    c_params = [
+        [-1.314116732645811,-1.4488445790982132,0.48350173248983297,1.0231018578214124],
+        [1.5241206408018835,-0.31494437751003845,1.5478918011471245,0.25993191444300034]
+    ]
+    colors = ((0,0,0,255),(50,50,150,255))
+    for n in range(num_cliffs):
+        clifford_sequence(img, x-400*n, y+400*n, color=colors[n])#, cliff_params=c_params[n])
+        
+def nested_cliffords(img, x, y):
+    colors = ((0,0,0,255),(50,50,150,255))
+    
+    num_iters = 100000
+    draw = ImageDraw.Draw(img)
+    
+    a = random.random()*4 - 2
+    b = random.random()*2
+    c = random.random()*2
+    d = random.random()*2
+    
+    print(f"{a},{b},{c},{d}")
+    for i in range(num_iters):
+        x, y = clifford_attractor(x, y, a, b, c, d)
+        x, y = clifford_attractor(x, y, x, y, c, d)
+        
+        x_p = img.width//2 + x/np.pi*(img.width//2)
+        y_p = img.height//2 + y/np.pi*(img.height//2)
+        # draw.rectangle(xy=(x_p-1, y_p-1, x_p + 1, y_p + 1),
+                        #  fill="black")
+        draw.point((x_p, y_p), fill="black")        
+    
