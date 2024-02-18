@@ -8,7 +8,7 @@ from colour_palettes import palettes
 
 import math
 
-DIM = (1000,1000)
+DIM = (4000,1000)
 background = "black"
 
 ## https://www.codementor.io/@isaib.cicourel/image-manipulation-in-python-du1089j1u
@@ -380,7 +380,7 @@ def score_triadic_color_alignment(image):
   return math.fabs(255/3 - avg_distance)
   
 if __name__ == "__main__":
-    image = Image.new("RGBA", DIM, background)
+    # image = Image.new("RGBA", DIM, background)
 
     # drunkardsWalk(image)
     # WolframCA(image)
@@ -411,16 +411,46 @@ if __name__ == "__main__":
     #flowField2(image, random.choice(palettes), 'curvy', random.randrange(200, 600), random.randrange(2, 5))
     #image.save("ff.png")
     
-    # # Generate 10 test images to see how the scores compared to aesthetic appeal.
-    for _ in range(10):
-      image = Image.new("RGBA", DIM, background)
-      circlePacking(image, random.choice(palettes), random.randrange(10, 30))
-      score = score_triadic_color_alignment(image)
+    # Generate 10 test images to see how the scores compared to aesthetic appeal.
+    for i in range(10):
+      image = Image.new("RGBA", DIM, "white")
+      image2 = Image.new("RGBA", DIM, "white")
       
-      neg_score = score_negative_space(image)
-      print(neg_score)
+      abstractRectangles(image2, random.choice(palettes), num_rects=random.randrange(5,50))
+      invert(image2)
       
-      image.save(f"circles_{int(neg_score*100)}.png")
+      abstractRectangles(image, random.choice(palettes), num_rects=random.randrange(5,50))
+      #staticShifter(image)
+      
+      #image = technique_mask(image, image2) 
+      
+      image.save(f"rectangles_{i}.png")
+    
+    # Search for Clifford Attractors that are of interest.
+    # images_found = 0
+    # while images_found < 100:
+    #   image = Image.new("RGBA", DIM, "white")
+    #   cliffords(image, random.randrange(DIM[0]//10, 9*DIM[0]//10), random.randrange(DIM[1]//10, 9*DIM[1]//10))
+    #   # nested_cliffords(image, DIM[0]//2, DIM[1]//2)
+    #   image.save(f"clifford_test.png")      
+      
+    #   color_list = hsv_color_list(image)
+      
+    #   # Calculate the percentage of negative space in the image.  
+    #   num_pixels = DIM[0]*DIM[1]
+    #   i = 0
+    #   for i in range(len(color_list)):
+    #     if color_list[i][1] == (255,255,255,255):
+    #       break
+      
+    #   white_perc = color_list[i][0] / num_pixels
+    #   print(white_perc*100)
+    #   if white_perc < 0.98:
+    #     print("An image with sufficient interest was found.")
+    #     image.save(f"./clifford_images/clifford_test_{images_found}.png")      
+    #     images_found += 1
+    #   else:
+    #     print("Continuing the search.")
     
     # image = Image.new("RGBA", DIM, background)
     # for _ in range(5):

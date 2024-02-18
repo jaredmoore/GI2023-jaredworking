@@ -826,23 +826,24 @@ def abstractRectangles(img, palette, num_rects=10):
         rect_length = 1 if rect_length < 1 else rect_length
         rect_height = 1 if rect_height < 1 else rect_height
     
-        mondrian_rectangle(img, x, y, rect_length, rect_height, random.choice(palette), random.randrange(0,400))
+        mondrian_rectangle(img, palette, x, y, rect_length, rect_height, random.randint(0,20), random.randrange(0,400))
         
-def mondrian_rectangle(img, x, y, rect_len, rect_ht, rect_fill, line_overdraw):
+def mondrian_rectangle(img, palette, x, y, rect_len, rect_ht, rect_fill, line_overdraw):
     """ Draw a mondrian style rectangle with black lines exceeding the edges.
 
     Args:
         img (PIL image object): the image to draw on.
+        palette (list): list of colors to choose from.
         x (int): center x location of the rectangle.
         y (int): center y location of the rectangle.
         rect_len (int): length of the rectangle.
         rect_ht (int): height of the rectangle.
-        rect_fill ((int,int,int)): color to fill the rectangle with in (rgb).
+        rect_fill (int): index to use to fill the rectangle with in (rgb) from palette (modulo to prevent error).
         line_overdraw (int): The amount of overdraw for the black lines.
     """
     draw = ImageDraw.Draw(img)
     draw.rectangle(xy=(x, y, x + rect_len, y + rect_ht),
-                         fill=rect_fill)
+                         fill=palette[rect_fill%len(palette)])
     draw.line((x-line_overdraw, y,                x+rect_len+line_overdraw,    y), fill="black", width=4)
     draw.line((x-line_overdraw, y+rect_ht,    x+rect_len+line_overdraw,    y+rect_ht), fill="black", width=4)
     draw.line((x,               y-line_overdraw,  x,                y+rect_ht+line_overdraw), fill="black", width=4)
